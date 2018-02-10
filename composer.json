@@ -1,10 +1,14 @@
 {
-    "name": "tagix/trackum",
+    "name": "cashalot/trackum",
     "authors": [
         {
             "name": "Geoffrey Hervet",
             "email": "hervetg@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "doctrine/dbal": "^2.6",
+        "guzzle/guzzle": "^3.9",
+        "tightenco/collect": "^5.6"
+    }
 }
