@@ -6,6 +6,11 @@
             "email": "hervetg@gmail.com"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
     "require": {
         "doctrine/dbal": "^2.6",
         "guzzle/guzzle": "^3.9",
