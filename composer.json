@@ -1,0 +1,10 @@
+{
+    "name": "tagix/trackum",
+    "authors": [
+        {
+            "name": "Geoffrey Hervet",
+            "email": "hervetg@gmail.com"
+        }
+    ],
+    "require": {}
+}
