@@ -64,24 +64,9 @@ class MarketGetCommand extends Command
         $this->to->setTime(0,0,0);
     }
 
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
+    public function handle(OHLCFactory $OHLCFactory)
     {
-        parent::__construct();
-    }
-
-    /**
-     * Execute the console command.
-     *
-     * @return mixed
-     */
-    public function handle()
-    {
-        $items = OHLCFactory::build($this->coin, $this->from, $this->to)->toArray();
+        $items = $OHLCFactory->build($this->coin, $this->from, $this->to)->toArray();
         if (empty($items)) {
             return;
         }

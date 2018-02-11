@@ -8,8 +8,22 @@ use Illuminate\Support\Collection;
 
 class OHLCFactory
 {
-    public static function build(Coin $coin, \DateTime $from, \DateTime $to): Collection
+    /**
+     * @var CoinMarketCap
+     */
+    private $crawler;
+
+    /**
+     * OHLCFactory constructor.
+     * @param CoinMarketCap $crawler
+     */
+    public function __construct(CoinMarketCap $crawler)
     {
-        return (new CoinMarketCap())->getData($coin, $from, $to);
+        $this->crawler = $crawler;
+    }
+
+    public function build(Coin $coin, \DateTime $from, \DateTime $to): Collection
+    {
+        return $this->crawler->getData($coin, $from, $to);
     }
 }
