@@ -4,13 +4,30 @@ namespace App\Crawler;
 
 use App\Model\Coin;
 use App\Model\OHLC;
+use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Collection;
 use Symfony\Component\DomCrawler\Crawler;
 
 class CoinMarketCap
 {
+    private static $cacheTTL = 3600  * 2;
     private static $urlScheme = 'https://coinmarketcap.com/currencies/%s/historical-data/?start=%s&end=%s';
     private static $dateFormat = 'Ymd';
+
+    /**
+     * @var Repository
+     */
+    private $cache;
+
+    /**
+     * CoinMarketCap constructor.
+     * @param Repository $cache
+     */
+    public function __construct(Repository $cache)
+    {
+        $this->cache = $cache;
+    }
+
 
     protected function getUrl(Coin $coin, \DateTime $from, \DateTime $to): string
     {
@@ -68,14 +85,12 @@ class CoinMarketCap
 
     private function getPageContent(Coin $coin, \DateTime $from, \DateTime $to): string
     {
-        // To remove after debug phase
-        $fileName = 'cache/'.implode('.', [$coin,$from->format('Ymd'),$to->format('Ymd'),'html']);
-        if (file_exists($fileName)) return file_get_contents($fileName);
-        // !To remove
+        $url = $this->getUrl($coin, $from, $to);
+        if ($this->cache->has($url)) {
+            return $this->cache->get($url);
+        }
 
         $client = new \GuzzleHttp\Client();
-        $url = $this->getUrl($coin, $from, $to);
-
         $response = $client->get($url);
 
         if ($response->getStatusCode() !== 200) {
@@ -89,9 +104,7 @@ class CoinMarketCap
         }
 
         $bodyContent = $response->getBody()->getContents();
-        // To remove after debug phase
-//        file_put_contents($fileName, $bodyContent);
-         // !To remove
+        $this->cache->set($url, $bodyContent, static::$cacheTTL);
 
         return $bodyContent;
     }
