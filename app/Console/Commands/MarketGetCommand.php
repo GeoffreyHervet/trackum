@@ -4,11 +4,13 @@ namespace App\Console\Commands;
 
 use App\Factory\OHLCFactory;
 use App\Model\Coin;
+use function dump;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use \Illuminate\Support\Facades\DB;
 
 class MarketGetCommand extends Command
 {
@@ -54,7 +56,8 @@ class MarketGetCommand extends Command
 
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        $this->coin = new Coin($input->getArgument('coin'));
+        $this->coin = new Coin();
+        $this->coin->setName($input->getArgument('coin'));
         $this->from = \DateTime::createFromFormat('Y-m-d', $input->getOption('from'));
         $this->to = \DateTime::createFromFormat('Y-m-d', $input->getOption('to')) ?: new \DateTime();
         if (!$this->from) {
