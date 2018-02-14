@@ -55,25 +55,26 @@ class CoinManager
     /**
      * @return Collection The new coin stored in db
      */
-    private function checkForUpdate(): Collection
+    public function checkForUpdate(): Collection
     {
         $allDbCoins = $this->all();
 
-        return
-            Collection::make([$this->coinBridge
-            ->getAllCoins()->first()])
+        return $this->coinBridge->getAllCoins()
             ->filter(function (Coin $newCoin) use ($allDbCoins): bool {
                 return !$allDbCoins->contains(function (Coin $dbCoin) use ($newCoin): bool {
-                    return $dbCoin->eq($newCoin);
+                    return $dbCoin->slug === $newCoin->slug;
                 });
             })
-            ->each(function (Coin $newCoin) {
+            ->map(function (Coin $newCoin) {
                 try {
                     $newCoin->save();
+                    return $newCoin;
                 } catch (QueryException $exception) {
                     // Silent SQL Error (duplicate symbol, e.g: CAT)
+                    return null;
                 }
             })
+            ->filter()
         ;
     }
 
