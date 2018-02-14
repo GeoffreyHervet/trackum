@@ -2,20 +2,12 @@
 
 namespace App\Console\Commands;
 
-
-use App\Bridge\CoinMarketCap\CoinBridge;
-use App\Factory\OHLCFactory;
 use App\Manager\CoinManager;
 use App\Model\Coin;
-use function array_keys;
-use function array_values;
-use function dump;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use \Illuminate\Support\Facades\DB;
 
 class CoinCommand extends Command
 {

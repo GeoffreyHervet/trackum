@@ -2,9 +2,10 @@
 
 namespace App\Model;
 
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
 
-class Coin extends Model
+class Coin extends Model implements Arrayable
 {
     protected $table = 'coins';
     protected $fillable = [
@@ -30,4 +31,8 @@ class Coin extends Model
      */
     protected $slug;
 
+    public function ohlc()
+    {
+        return $this->hasMany(OHLC::class);
+    }
 }

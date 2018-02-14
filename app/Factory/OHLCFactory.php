@@ -2,28 +2,39 @@
 
 namespace App\Factory;
 
-use App\Crawler\CoinMarketCap;
 use App\Model\Coin;
-use Illuminate\Support\Collection;
+use App\Model\OHLC;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Psy\Exception\RuntimeException;
 
-class OHLCFactory
+class OHLCFactory extends AbstractFactory
 {
-    /**
-     * @var CoinMarketCap
-     */
-    private $crawler;
-
-    /**
-     * OHLCFactory constructor.
-     * @param CoinMarketCap $crawler
-     */
-    public function __construct(CoinMarketCap $crawler)
+    public static function create(array $attributes): OHLC
     {
-        $this->crawler = $crawler;
+        static::validCoinAttribute($attributes);
+
+        $coin = $attributes['coin'];
+        unset($attributes['coin']);
+
+        return static::createWithCoin($coin, $attributes);
     }
 
-    public function build(Coin $coin, \DateTime $from, \DateTime $to): Collection
+    public static function createWithCoin(Coin $coin, array $attributes): OHLC
     {
-        return $this->crawler->getData($coin, $from, $to);
+        /** @var OHLC $ohlc */
+        $ohlc = self::createModel(new OHLC(), $attributes);
+        $ohlc->coin()->associate($coin);
+
+        return $ohlc;
+    }
+
+    private static function validCoinAttribute(array $attributes)
+    {
+        if (!isset($attributes['coin'])) {
+            throw new ModelNotFoundException('No coin attribute given to '.__CLASS__);
+        }
+        if (!($attributes['coin'] instanceof Coin)) {
+            throw new RuntimeException('No coin attribute given to '.__CLASS__);
+        }
     }
 }

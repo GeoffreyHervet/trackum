@@ -4,11 +4,9 @@ namespace App\Manager;
 
 use App\Bridge\CoinMarketCap\CoinBridge;
 use App\Model\Coin;
-use function dump;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
-use function var_dump;
 
 class CoinManager
 {
@@ -37,7 +35,7 @@ class CoinManager
                 });
         }
 
-        if ($coin === null) {
+        if (null === $coin) {
             throw new ModelNotFoundException();
         }
 
@@ -77,6 +75,4 @@ class CoinManager
             ->filter()
         ;
     }
-
-
 }

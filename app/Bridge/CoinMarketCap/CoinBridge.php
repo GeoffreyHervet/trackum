@@ -3,12 +3,9 @@
 namespace App\Bridge\CoinMarketCap;
 
 use App\Factory\CoinFactory;
-use App\Model\Coin;
-use function dump;
 use Illuminate\Support\Collection;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Symfony\Component\DomCrawler\Crawler;
-use function var_dump;
 
 class CoinBridge
 {

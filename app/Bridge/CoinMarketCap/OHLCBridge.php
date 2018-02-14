@@ -1,16 +1,17 @@
 <?php
 
-namespace App\Crawler;
+namespace App\Bridge\CoinMarketCap;
 
+use App\Factory\OHLCFactory;
 use App\Model\Coin;
 use App\Model\OHLC;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Collection;
 use Symfony\Component\DomCrawler\Crawler;
 
-class CoinMarketCap
+class OHLCBridge
 {
-    private static $cacheTTL = 3600  * 2;
+    private static $cacheTTL = 3600 * 2;
     private static $urlScheme = 'https://coinmarketcap.com/currencies/%s/historical-data/?start=%s&end=%s';
     private static $dateFormat = 'Ymd';
 
@@ -21,6 +22,7 @@ class CoinMarketCap
 
     /**
      * CoinMarketCap constructor.
+     *
      * @param Repository $cache
      */
     public function __construct(Repository $cache)
@@ -28,18 +30,12 @@ class CoinMarketCap
         $this->cache = $cache;
     }
 
-
-    protected function getUrl(Coin $coin, \DateTime $from, \DateTime $to): string
+    public static function getMinPeriod(): \DateInterval
     {
-        return sprintf(
-            static::$urlScheme,
-            $coin,
-            $from->format(static::$dateFormat),
-            $to->format(static::$dateFormat)
-        );
+        return new \DateInterval('P1D');
     }
 
-    public function getData(Coin $coin, \DateTime $from, \DateTime $to): Collection
+    public function getByCoinBetween(Coin $coin, \DateTime $from, \DateTime $to, bool $checkForUpdate = false): Collection
     {
         $pageContent = $this->getPageContent($coin, $from, $to);
 
@@ -52,6 +48,30 @@ class CoinMarketCap
             });
     }
 
+    public function canUpdate(Collection $ohlcCollection, \DateTime $from, \DateTime $to): bool
+    {
+        return null !== $this->createPeriodRange($from, $to)
+            ->map(function (\DateTime $dateTime): int {
+                return (int) $dateTime->format('Ymd');
+            })
+            // Returns the 1st date which is not in $ohlcCollection
+            ->first(function (int $date) use ($ohlcCollection): bool {
+                return null === $ohlcCollection->first(function (OHLC $OHLC) use ($date): bool {
+                    return (int) $OHLC->openDate->format('Ymd') === $date;
+                });
+            }, null);
+    }
+
+    protected function getUrl(Coin $coin, \DateTime $from, \DateTime $to): string
+    {
+        return sprintf(
+            static::$urlScheme,
+            $coin->slug,
+            $from->format(static::$dateFormat),
+            $to->format(static::$dateFormat)
+        );
+    }
+
     private function nodeContentToOHLC(Coin $coin, string $nodeContent): OHLC
     {
         $node = Collection::make(explode(PHP_EOL, $nodeContent))
@@ -62,7 +82,7 @@ class CoinMarketCap
                 return !empty($value);
             })
             ->map(function (string $value): string {
-                return str_replace(',','', $value);
+                return str_replace(',', '', $value);
             })
             ->values();
 
@@ -71,16 +91,17 @@ class CoinMarketCap
         $closeDate = clone $openDate;
         $closeDate->setTime(23, 59, 59);
 
-        return (new OHLC())
-            ->setOpenDate($openDate)
-            ->setCloseDate($closeDate)
-            ->setCoin($coin)
-            ->setOpen($node[1] * 100)
-            ->setHigh($node[2] * 100)
-            ->setLow($node[3] * 100)
-            ->setClose($node[4] * 100)
-            ->setVolume((int) $node[5])
-            ->setMarketCap((int) $node[6]);
+        return OHLCFactory::create([
+            'openDate' => $openDate,
+            'closeDate' => $closeDate,
+            'coin' => $coin,
+            'open' => $node[1] * 100,
+            'high' => $node[2] * 100,
+            'low' => $node[3] * 100,
+            'close' => $node[4] * 100,
+            'volume' => (int) $node[5],
+            'marketCap' => (int) $node[6],
+        ]);
     }
 
     private function getPageContent(Coin $coin, \DateTime $from, \DateTime $to): string
@@ -93,7 +114,7 @@ class CoinMarketCap
         $client = new \GuzzleHttp\Client();
         $response = $client->get($url);
 
-        if ($response->getStatusCode() !== 200) {
+        if (200 !== $response->getStatusCode()) {
             throw new \RuntimeException(sprintf(
                 'Status code is %d for %s [%s %s]',
                 $response->getStatusCode(),
@@ -107,5 +128,10 @@ class CoinMarketCap
         $this->cache->set($url, $bodyContent, static::$cacheTTL);
 
         return $bodyContent;
+    }
+
+    private function createPeriodRange(\DateTime $from, \DateTime $to): Collection
+    {
+        return Collection::make(new \DatePeriod($from, static::getMinPeriod(), $to));
     }
 }
