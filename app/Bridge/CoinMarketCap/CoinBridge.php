@@ -2,11 +2,13 @@
 
 namespace App\Bridge\CoinMarketCap;
 
+use App\Factory\CoinFactory;
 use App\Model\Coin;
 use function dump;
 use Illuminate\Support\Collection;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Symfony\Component\DomCrawler\Crawler;
+use function var_dump;
 
 class CoinBridge
 {
@@ -35,9 +37,10 @@ class CoinBridge
         $nodes = $crawler->filter('#currencies-all tbody tr');
 
         return Collection::make($nodes)
-            ->map(function (\DOMElement $nodeContent): Coin {
+            ->map(function (\DOMElement $nodeContent) {
                 return $this->nodeContentToCoin($nodeContent);
-            });
+            })
+            ->filter();
     }
 
     private function nodeContentToCoin(\DOMElement $element)
@@ -50,7 +53,7 @@ class CoinBridge
         $slug = $matches[1];
         $name = $crawler->filter('.currency-name-container')->text();
 
-        return new Coin([
+        return CoinFactory::create([
             'name' => $name,
             'slug' => $slug,
             'symbol' => $symbol,

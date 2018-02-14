@@ -18,6 +18,9 @@ class CreateCoinsTable extends Migration
             $table->timestamps();
             $table->string('symbol', 10);
             $table->string('name', 255);
+            $table->string('slug', 255);
+            $table->unique('symbol');
+            $table->unique('slug');
         });
     }
 
