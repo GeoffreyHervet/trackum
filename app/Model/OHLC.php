@@ -2,12 +2,19 @@
 
 namespace App\Model;
 
-class OHLC
+use Illuminate\Contracts\Support\Arrayable;
+
+class OHLC implements Arrayable
 {
     /**
      * @var Coin
      */
     private $coin;
+
+    /**
+     * @var string
+     */
+    private $id;
 
     /**
      * @var int
@@ -48,6 +55,30 @@ class OHLC
      * @var \DateTime
      */
     private $closeDate;
+
+    public function getId(): string
+    {
+        return implode(':', [
+            $this->coin,
+            $this->openDate->format('Y.m.d.h.i.s'),
+            $this->openDate->format('Y.m.d.h.i.s'),
+        ]);
+    }
+
+    public function toArray()
+    {
+        return [
+            'coin' => $this->getCoin(),
+            'open' => $this->getOpen(),
+            'high' => $this->getHigh(),
+            'low' => $this->getLow(),
+            'close' => $this->getClose(),
+            'volume' => $this->getVolume(),
+            'market_cap' => $this->getMarketCap(),
+            'open_date' => $this->getOpenDate()->format('Y-h-d'),
+            'close_date' => $this->getCloseDate()->format('Y-m-d'),
+        ];
+    }
 
     /**
      * @return Coin
@@ -210,5 +241,4 @@ class OHLC
         $this->closeDate = $closeDate;
         return $this;
     }
-
 }
